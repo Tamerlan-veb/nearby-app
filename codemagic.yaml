@@ -6,7 +6,7 @@ workflows:
       groups:
         - appstore_credentials
       vars:
-        BUNDLE_ID: com.example.nearby
+        BUNDLE_ID: com.tamerlan.nearby
       node: latest
       xcode: latest
     scripts:
