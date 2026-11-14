@@ -1,0 +1,46 @@
+name: Build Android AAB
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Install dependencies
+        run: npm install
+      - name: Add Android platform
+        run: npx cap add android
+      - name: Sync Capacitor
+        run: npx cap sync android
+      - name: Create upload keystore
+        run: |
+          keytool -genkeypair -v -keystore upload.keystore -alias upload -keyalg RSA -keysize 2048 -validity 10000 -storepass android123 -keypass android123 -dname "CN=Nearby, OU=Mobile, O=Tamerlan, L=Helsinki, S=Uusimaa, C=FI"
+      - name: Build signed AAB
+        env:
+          UPLOAD_KEYSTORE_PASSWORD: android123
+          UPLOAD_KEY_ALIAS: upload
+          UPLOAD_KEY_PASSWORD: android123
+        run: |
+          cd android
+          ./gradlew bundleRelease
+      - name: Upload AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-aab
+          path: android/app/build/outputs/bundle/release/*.aab
+      - name: Upload keystore
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-upload-keystore
+          path: upload.keystore
